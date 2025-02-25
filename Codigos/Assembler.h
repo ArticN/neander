@@ -5,16 +5,20 @@
 #include <stdlib.h>
 #include <string.h>
 
-bool linha_vazia();
-bool mneumon_valido();
-bool final_bloco();
+//
+// De padrão estamos usando valores em hexadecimal por isso o uint8_t
+//
 
-void instrucao_simples();
-void instrucao_composta();
-void escrever();
+bool linha_vazia(char *line);
+bool mneumon_valido(char *mneumon);
+bool final_bloco(char *line);
 
-int buscar();
-int executar();
+void instrucao_simples(char *mneumon, uint8_t *memory_posit);
+void instrucao_composta(char *mneumon, uint8_t value, uint8_t *mneumon_mem_posit, uint8_t *value_mem_posit);
+void escrever(uint8_t mem[256]);
+
+int buscar(char *line, char *w[10]);
+int executar(void);
 
 
 

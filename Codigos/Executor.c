@@ -1,4 +1,4 @@
-//#include "Executor.h"
+#include "Executor.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -44,7 +44,7 @@ int main(void)
     //
     //ageitar onde ele pega o arquivo, devido a reorganização em pastas
     //
-    FILE *file = fopen("SomaAssembly.mem", "rb");
+    FILE *file = fopen("../Arquivos/SomaAssembly.mem", "rb");
 
     if(file == NULL){
         printf("Não foi possivel ler o arquivo!");
