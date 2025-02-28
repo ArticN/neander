@@ -1,65 +1,39 @@
-# neander
-
 ---
 
-# Assembler
+# Neander Assembler and Executor
 
-Este projeto é um simples montador (assembler) que lê um arquivo de texto contendo instruções de montagem e dados, processa essas instruções e dados, e escreve o resultado em um arquivo binário de memória. O código está escrito em C.
+Este repositório tem como objetivo explicar diferentes códigos que, em conjunto, representam o funcionamento do Neander, um modelo didático de processador. O Neander é utilizado para fins educacionais, ajudando a entender os conceitos básicos de arquitetura de computadores e montagem.
 
-## Estrutura do Código
+## Arquivos
 
-### Funções
+### assembler.c
 
-1. **linha_vazia**
-   - Verifica se uma linha está vazia ou contém apenas espaços em branco.
-   - **Parâmetro:** `char *linha` - a linha a ser verificada.
-   - **Retorno:** `bool` - `true` se a linha estiver vazia, `false` caso contrário.
+Este arquivo contém o código de um montador (assembler) que lê um arquivo de texto contendo instruções de montagem e dados, processa essas instruções e dados, e escreve o resultado em um arquivo binário de memória.
 
-2. **mneumon_valido**
-   - Verifica se um mnemônico é válido.
-   - **Parâmetro:** `char *mnemonico` - o mnemônico a ser verificado.
-   - **Retorno:** `bool` - `true` se o mnemônico for válido, `false` caso contrário.
+#### Ideia Central
 
-3. **final_bloco**
-   - Verifica se uma linha contém o comando "END", indicando o fim de um bloco.
-   - **Parâmetro:** `char *linha` - a linha a ser verificada.
-   - **Retorno:** `bool` - `true` se a linha contém "END", `false` caso contrário.
+- **Leitura do Arquivo:** O montador lê um arquivo de texto (`Txt/Assemblyzinho.txt`) linha por linha.
+- **Processamento de Dados:** As linhas são analisadas para identificar blocos de dados e código.
+- **Instruções:** As instruções são convertidas em códigos de máquina e armazenadas na memória.
+- **Escrita na Memória:** A memória resultante é escrita em um arquivo binário (`../Mems/memoria_gerada.mem`).
+- **Exibição da Memória:** A memória é exibida no terminal em blocos de 16 bytes.
 
-4. **instrucao_simples**
-   - Escreve uma instrução simples na memória.
-   - **Parâmetros:**
-     - `char *mnemonico` - o mnemônico da instrução.
-     - `uint8_t *memoria` - o endereço na memória onde a instrução será escrita.
+### executor.c
 
-5. **instrucao_composta**
-   - Escreve uma instrução composta na memória.
-   - **Parâmetros:**
-     - `char *mnemonico` - o mnemônico da instrução.
-     - `uint8_t valor` - o valor associado à instrução.
-     - `uint8_t *memoria_codigo` - o endereço na memória onde o código da instrução será escrito.
-     - `uint8_t *memoria_valor` - o endereço na memória onde o valor será escrito.
+Este arquivo contém o código de um executor que simula a execução das instruções armazenadas na memória.
 
-6. **escrever**
-   - Escreve a memória em um arquivo binário.
-   - **Parâmetro:** `uint8_t *memoria` - a memória a ser escrita no arquivo.
+#### Ideia Central
 
-7. **processar_bloco_dados**
-   - Processa o bloco de dados do arquivo de entrada.
-   - **Parâmetros:**
-     - `FILE *arquivo` - o arquivo de entrada.
-     - `uint8_t *memoria` - a memória onde os dados serão armazenados.
+- **Leitura do Arquivo de Memória:** O executor lê um arquivo binário de memória (`../Arquivos/SomaAssembly.mem`).
+- **Simulação de Execução:** As instruções são executadas uma a uma, modificando o acumulador (AC) e o contador de programa (PC).
+- **Instruções Suportadas:** O executor suporta várias instruções, como `STA`, `LDA`, `ADD`, `OR`, `AND`, `NOT`, `JMP`, `JN`, `JZ`, e `HLT`.
+- **Exibição da Memória:** A memória é exibida no terminal após a execução, mostrando o estado final do acumulador e do contador de programa.
 
-8. **processar_bloco_codigo**
-   - Processa o bloco de código do arquivo de entrada.
-   - **Parâmetros:**
-     - `FILE *arquivo` - o arquivo de entrada.
-     - `uint8_t *memoria` - a memória onde as instruções serão armazenadas.
-     - `int *posicao_memoria` - a posição atual na memória.
+#### Funções Principais
 
-9. **executar**
-   - Função principal do assembler. Lê o arquivo de entrada, processa os blocos de dados e código, e escreve a memória resultante em um arquivo binário.
+- **print_memory:** Exibe a memória em blocos de 16 bytes, mostrando o estado do acumulador (AC) e do contador de programa (PC).
+- **flagZero:** Verifica se o acumulador é zero.
+- **flagNeg:** Verifica se o acumulador é negativo.
+- **main:** Função principal que lê o arquivo de memória, executa as instruções e exibe a memória final.
 
-10. **main**
-    - Função principal do programa. Chama a função `executar`.
-
-
+---
