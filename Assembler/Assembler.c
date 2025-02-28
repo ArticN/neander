@@ -20,7 +20,7 @@ bool linha_vazia(char *linha) {
 // Verifica se o mnemônico é válido
 bool mneumon_valido(char *mnemonico) {
     char *mnemonicos_permitidos[] = {"STA", "LDA", "ADD", "OR", "AND", "NOT", "JMP", "JN", "JZ", "HLT", "NOP"};
-    for (int i = 0; i < 11; i++) {
+    for (int i = 0; i < sizeof(mnemonicos_permitidos) / sizeof(mnemonicos_permitidos[0]); i++) {
         if (strcmp(mnemonico, mnemonicos_permitidos[i]) == 0) {
             return true;
         }
@@ -47,7 +47,7 @@ void instrucao_simples(char *mnemonico, uint8_t *memoria) {
     char *mnemonicos_simples[] = {"NOP", "NOT", "HLT"};
     uint8_t codigos[] = {0x00, 0x60, 0xF0};
 
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < sizeof(mnemonicos_simples) / sizeof(mnemonicos_simples[0]); i++) {
         if (strcmp(mnemonico, mnemonicos_simples[i]) == 0) {
             *memoria = codigos[i];
             printf("Instrução simples: %s -> %#02x\n", mnemonico, codigos[i]);
@@ -61,7 +61,7 @@ void instrucao_composta(char *mnemonico, uint8_t valor, uint8_t *memoria_codigo,
     char *mnemonicos_compostos[] = {"STA", "LDA", "ADD", "OR", "AND", "JMP", "JN", "JZ"};
     uint8_t codigos[] = {0x10, 0x20, 0x30, 0x40, 0x50, 0x80, 0x90, 0xA0};
 
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < sizeof(mnemonicos_compostos) / sizeof(mnemonicos_compostos[0]); i++) {
         if (strcmp(mnemonico, mnemonicos_compostos[i]) == 0) {
             *memoria_codigo = codigos[i];
             *memoria_valor = valor;
@@ -79,13 +79,59 @@ void escrever(uint8_t *memoria) {
         return;
     }
 
-    // Escreve a memória no arquivo
     fwrite(memoria, sizeof(uint8_t), 516, arquivo);
     fclose(arquivo);
     printf("Memória salva no arquivo.");
 }
 
-// Função principal do assembler
+
+void processar_bloco_dados(FILE *arquivo, uint8_t *memoria) {
+    char linha[100];
+    while (fgets(linha, sizeof(linha), arquivo)) {
+        if (final_bloco(linha)) {
+            printf("Fim do bloco de dados.\n");
+            break;
+        }
+
+        int posicao, valor;
+        if (sscanf(linha, "%d %d", &posicao, &valor) == 2) {
+            if (posicao >= 0 && posicao < 516 && valor >= 0 && valor <= 255) {
+                memoria[posicao] = (uint8_t)valor;
+                printf("Variável armazenada: posição %d = %d\n", posicao, valor);
+            } else {
+                printf("Erro: Posição ou valor inválido.\n");
+            }
+        }
+    }
+}
+
+void processar_bloco_codigo(FILE *arquivo, uint8_t *memoria, int *posicao_memoria) {
+    char linha[100];
+    while (fgets(linha, sizeof(linha), arquivo)) {
+        if (final_bloco(linha)) {
+            printf("Fim do bloco de código.\n");
+            break;
+        }
+
+        char mnemonico[10];
+        int valor = 0;
+        if (sscanf(linha, "%s %d", mnemonico, &valor) >= 1) {
+            if (mneumon_valido(mnemonico)) {
+                if (valor == 0) {
+                    instrucao_simples(mnemonico, &memoria[*posicao_memoria]);
+                    (*posicao_memoria)++;
+                } else {
+                    instrucao_composta(mnemonico, (uint8_t)valor, &memoria[*posicao_memoria], &memoria[*posicao_memoria + 1]);
+                    (*posicao_memoria) += 2;
+                }
+            } else {
+                printf("Erro: Mnemônico inválido.\n");
+            }
+        }
+    }
+}
+
+
 int executar(void) {
     FILE *arquivo = fopen("Txt/Assemblyzinho.txt", "r");
     if (!arquivo) {
@@ -94,28 +140,24 @@ int executar(void) {
     }
 
     uint8_t memoria[516] = {0}; // Memória de 516 posições
-    int posicao_memoria = 0;     // Posição atual na memória
-    char linha[100];              // Buffer para ler cada linha do arquivo
+    int posicao_memoria = 0;    // Posição atual na memória
+    char linha[100];            // Buffer para ler cada linha do arquivo
 
     while (fgets(linha, sizeof(linha), arquivo)) {
         printf("Linha lida: %s", linha);
 
-        // Ignora linhas vazias ou comentários
         if (linha_vazia(linha) || linha[0] == '/') {
             printf("Ignorando linha vazia ou comentário.\n");
             continue;
         }
 
-        // Remove o caractere de nova linha
         linha[strcspn(linha, "\n")] = '\0';
 
-        // Verifica se é o fim de um bloco
         if (final_bloco(linha)) {
             printf("Fim do bloco encontrado.\n");
             continue;
         }
 
-        // Divide a linha em tokens
         char *tokens[10];
         int num_tokens = 0;
         char *token = strtok(linha, " \t");
@@ -124,68 +166,37 @@ int executar(void) {
             token = strtok(NULL, " \t");
         }
 
-        // Processa a linha
         if (num_tokens == 0) {
-            continue; // Linha vazia
+            continue;
         }
 
         if (strcmp(tokens[0], "DATA") == 0) {
             printf("Início do bloco de dados.\n");
-            // Processa variáveis no bloco DATA
-            while (fgets(linha, sizeof(linha), arquivo)) {
-                if (final_bloco(linha)) {
-                    printf("Fim do bloco de dados.\n");
-                    break;
-                }
-
-                int posicao, valor;
-                if (sscanf(linha, "%d %d", &posicao, &valor) == 2) {
-                    if (posicao >= 0 && posicao < 516 && valor >= 0 && valor <= 255) {
-                        memoria[posicao] = (uint8_t)valor;
-                        printf("Variável armazenada: posição %d = %d\n", posicao, valor);
-                    } else {
-                        printf("Erro: Posição ou valor inválido.\n");
-                    }
-                }
-            }
+            processar_bloco_dados(arquivo, memoria);
         } else if (strcmp(tokens[0], "CODE") == 0) {
             printf("Início do bloco de código.\n");
-            // Processa instruções no bloco CODE
-            while (fgets(linha, sizeof(linha), arquivo)) {
-                if (final_bloco(linha)) {
-                    printf("Fim do bloco de código.\n");
-                    break;
-                }
-
-                char mnemonico[10];
-                int valor = 0;
-                if (sscanf(linha, "%s %d", mnemonico, &valor) >= 1) {
-                    if (mneumon_valido(mnemonico)) {
-                        if (valor == 0) {
-                            instrucao_simples(mnemonico, &memoria[posicao_memoria]);
-                            posicao_memoria++;
-                        } else {
-                            instrucao_composta(mnemonico, (uint8_t)valor, &memoria[posicao_memoria], &memoria[posicao_memoria + 1]);
-                            posicao_memoria += 2;
-                        }
-                    } else {
-                        printf("Erro: Mnemônico inválido.\n");
-                    }
-                }
-            }
+            processar_bloco_codigo(arquivo, memoria, &posicao_memoria);
         }
     }
 
     fclose(arquivo);
 
-    // Exibe a memória
+    // Exibe a memória em blocos de 16 bytes
     printf("Estado final da memória:\n");
     for (int i = 0; i < 516; i++) {
-        printf("memoria[%d] = %#02x\n", i, memoria[i]);
+        if (i % 16 == 0) {
+            printf("\n%03X: ", i);
+        }
+        printf("%02X ", memoria[i]);
     }
+    printf("\n");
 
-    // Salva a memória em um arquivo
     escrever(memoria);
 
     return 0;
+}
+
+
+int main(int argc, char *argv[]) {
+    return executar();
 }
