@@ -7,7 +7,7 @@
 #include <string.h>
 
 // Verifica se a linha está vazia
-bool linha_vazia(const char *linha) {
+bool linha_vazia(char *linha) {
     while (*linha) {
         if (!isspace((unsigned char)*linha)) {
             return false;
@@ -18,8 +18,8 @@ bool linha_vazia(const char *linha) {
 }
 
 // Verifica se o mnemônico é válido
-bool mnemonic_valido(const char *mnemonico) {
-    const char *mnemonicos_permitidos[] = {"STA", "LDA", "ADD", "OR", "AND", "NOT", "JMP", "JN", "JZ", "HLT", "NOP"};
+bool mneumon_valido(char *mnemonico) {
+    char *mnemonicos_permitidos[] = {"STA", "LDA", "ADD", "OR", "AND", "NOT", "JMP", "JN", "JZ", "HLT", "NOP"};
     for (int i = 0; i < 11; i++) {
         if (strcmp(mnemonico, mnemonicos_permitidos[i]) == 0) {
             return true;
@@ -29,7 +29,7 @@ bool mnemonic_valido(const char *mnemonico) {
 }
 
 // Verifica se a linha contém o comando "END"
-bool encontrou_end(const char *linha) {
+bool final_bloco(char *linha) {
     char linha_copia[100];
     strncpy(linha_copia, linha, sizeof(linha_copia));
     char *token = strtok(linha_copia, " \t\n\r");
@@ -43,9 +43,9 @@ bool encontrou_end(const char *linha) {
 }
 
 // Escreve uma instrução simples na memória
-void escrever_instrucao_simples(const char *mnemonico, uint8_t *memoria) {
-    const char *mnemonicos_simples[] = {"NOP", "NOT", "HLT"};
-    const uint8_t codigos[] = {0x00, 0x60, 0xF0};
+void instrucao_simples(char *mnemonico, uint8_t *memoria) {
+    char *mnemonicos_simples[] = {"NOP", "NOT", "HLT"};
+    uint8_t codigos[] = {0x00, 0x60, 0xF0};
 
     for (int i = 0; i < 3; i++) {
         if (strcmp(mnemonico, mnemonicos_simples[i]) == 0) {
@@ -57,9 +57,9 @@ void escrever_instrucao_simples(const char *mnemonico, uint8_t *memoria) {
 }
 
 // Escreve uma instrução composta na memória
-void escrever_instrucao_composta(const char *mnemonico, uint8_t valor, uint8_t *memoria_codigo, uint8_t *memoria_valor) {
-    const char *mnemonicos_compostos[] = {"STA", "LDA", "ADD", "OR", "AND", "JMP", "JN", "JZ"};
-    const uint8_t codigos[] = {0x10, 0x20, 0x30, 0x40, 0x50, 0x80, 0x90, 0xA0};
+void instrucao_composta(char *mnemonico, uint8_t valor, uint8_t *memoria_codigo, uint8_t *memoria_valor) {
+    char *mnemonicos_compostos[] = {"STA", "LDA", "ADD", "OR", "AND", "JMP", "JN", "JZ"};
+    uint8_t codigos[] = {0x10, 0x20, 0x30, 0x40, 0x50, 0x80, 0x90, 0xA0};
 
     for (int i = 0; i < 8; i++) {
         if (strcmp(mnemonico, mnemonicos_compostos[i]) == 0) {
@@ -72,22 +72,22 @@ void escrever_instrucao_composta(const char *mnemonico, uint8_t valor, uint8_t *
 }
 
 // Escreve a memória em um arquivo binário
-void salvar_memoria(const uint8_t *memoria, const char *nome_arquivo) {
-    FILE *arquivo = fopen(nome_arquivo, "wb");
+void escrever(uint8_t *memoria) {
+    FILE *arquivo = fopen("../Mems/memoria_gerada.mem", "wb");
     if (!arquivo) {
-        printf("Erro ao abrir o arquivo %s.\n", nome_arquivo);
+        printf("Erro ao abrir o arquivo.");
         return;
     }
 
     // Escreve a memória no arquivo
     fwrite(memoria, sizeof(uint8_t), 516, arquivo);
     fclose(arquivo);
-    printf("Memória salva no arquivo %s.\n", nome_arquivo);
+    printf("Memória salva no arquivo.");
 }
 
 // Função principal do assembler
-int ExecutarAssembler(void) {
-    FILE *arquivo = fopen("assembly.txt", "r");
+int executar(void) {
+    FILE *arquivo = fopen("Txt/Assemblyzinho.txt", "r");
     if (!arquivo) {
         printf("Erro ao abrir o arquivo assembly.txt.\n");
         return 1;
@@ -110,7 +110,7 @@ int ExecutarAssembler(void) {
         linha[strcspn(linha, "\n")] = '\0';
 
         // Verifica se é o fim de um bloco
-        if (encontrou_end(linha)) {
+        if (final_bloco(linha)) {
             printf("Fim do bloco encontrado.\n");
             continue;
         }
@@ -133,7 +133,7 @@ int ExecutarAssembler(void) {
             printf("Início do bloco de dados.\n");
             // Processa variáveis no bloco DATA
             while (fgets(linha, sizeof(linha), arquivo)) {
-                if (encontrou_end(linha)) {
+                if (final_bloco(linha)) {
                     printf("Fim do bloco de dados.\n");
                     break;
                 }
@@ -152,7 +152,7 @@ int ExecutarAssembler(void) {
             printf("Início do bloco de código.\n");
             // Processa instruções no bloco CODE
             while (fgets(linha, sizeof(linha), arquivo)) {
-                if (encontrou_end(linha)) {
+                if (final_bloco(linha)) {
                     printf("Fim do bloco de código.\n");
                     break;
                 }
@@ -160,12 +160,12 @@ int ExecutarAssembler(void) {
                 char mnemonico[10];
                 int valor = 0;
                 if (sscanf(linha, "%s %d", mnemonico, &valor) >= 1) {
-                    if (mnemonic_valido(mnemonico)) {
+                    if (mneumon_valido(mnemonico)) {
                         if (valor == 0) {
-                            escrever_instrucao_simples(mnemonico, &memoria[posicao_memoria]);
+                            instrucao_simples(mnemonico, &memoria[posicao_memoria]);
                             posicao_memoria++;
                         } else {
-                            escrever_instrucao_composta(mnemonico, (uint8_t)valor, &memoria[posicao_memoria], &memoria[posicao_memoria + 1]);
+                            instrucao_composta(mnemonico, (uint8_t)valor, &memoria[posicao_memoria], &memoria[posicao_memoria + 1]);
                             posicao_memoria += 2;
                         }
                     } else {
@@ -185,7 +185,7 @@ int ExecutarAssembler(void) {
     }
 
     // Salva a memória em um arquivo
-    salvar_memoria(memoria, "memoria_gerada.bin");
+    escrever(memoria);
 
     return 0;
 }
