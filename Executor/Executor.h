@@ -17,6 +17,5 @@
 #define JZ 0xA0
 #define HLT 0xF0
 
-void print_memory(uint8_t *bytes, int size, uint8_t ac, uint8_t pc);
-bool flagZero(const int AC);
-bool flagNeg(const int AC);
+void print_memory(uint8_t *mem, size_t size, uint8_t ac, uint8_t pc, bool z, bool n);
+bool verify_file_identifier(FILE *file);
