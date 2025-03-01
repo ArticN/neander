@@ -1,138 +1,113 @@
 #include "Executor.h"
-#include <stdio.h>
-#include <stdlib.h>
 #include <stdbool.h>
 #include <stdint.h>
-//
-// colocado para servir de modelo até escrever um próprio
-//
-void print_memory(uint8_t *bytes, int size, uint8_t ac, uint8_t pc) {
-  size_t offset = 0;
+#include <stdio.h>
+#include <string.h>
 
-  printf("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
-  printf("AC: %d \nPC: %d\n", ac, pc);
+void print_memory(uint8_t *mem, size_t size, uint8_t ac, uint8_t pc, bool z, bool n) {
+  printf("Final Memory State:\n");
+  printf("AC: %03d  | PC: %03d\n", ac, pc);
+  printf("Z : %s | N : %s\n", z ? "true" : "false", n ? "true" : "false");
 
-  while (offset < size) {
+  for (size_t offset = 0; offset < size; offset += 16) {
     printf("%08zx: ", offset);
 
     for (size_t i = 0; i < 16; i++) {
       if (offset + i < size)
-        printf("%02x ", bytes[offset + i]);
+        printf("%02x ", mem[offset + i]);
       else
         printf("   ");
     }
 
     printf("\n");
-    offset += 16;
+  }
+}
+
+bool verify_file_identifier(FILE *file) {
+  uint8_t file_id[4];
+  fread(file_id, 1, 4, file);
+
+  const uint8_t expected_id[] = {0x03, 0x4E, 0x44, 0x52};
+  if (memcmp(file_id, expected_id, 4) != 0) {
+    fprintf(stderr, "Invalid file identifier! Expected 03 4E 44 52\n");
+    return false;
   }
 
-  offset += 16;
+  printf("Valid file identifier detected: %02x %02x %02x %02x\n", file_id[0], file_id[1], file_id[2], file_id[3]);
+  return true;
 }
 
-bool flagZero(const int AC) {
-    return AC == 0x00;
-}
+int main(int argc, char const *argv[]) {
+  if (argc < 2) {
+    fprintf(stderr, "Usage: %s <arquivo.mem>\n", argv[0]);
+    return 1;
+  }
 
-bool flagNeg(const int AC) {
-    return AC & 0x80;
-}
+  uint8_t ac = 0, pc = 0;
+  bool z = false, n = false;
 
-int main(void)
-{
-    int AC = 0;
-    int PC = 0x04;
-    //
-    //ageitar onde ele pega o arquivo, devido a reorganização em pastas
-    //
-    FILE *file = fopen("../Arquivos/SomaAssembly.mem", "rb");
+  const char *file_name = argv[1];
+  FILE *file = fopen(file_name, "rb");
+  if (!file) {
+    perror("Error opening file");
+    return 1;
+  }
 
-    if(file == NULL){
-        printf("Não foi possivel ler o arquivo!");
-        return 0;
+  if (!verify_file_identifier(file)) {
+    fclose(file);
+    return 1;
+  }
+
+  uint8_t mem[TOTAL_SIZE];
+  fread(mem + 4, 1, 512, file);
+  fclose(file);
+
+  while (mem[pc] != HLT) {
+    z = (ac == 0);
+    n = (ac & 0x80) != 0;
+
+    switch (mem[pc]) {
+    case NOP:
+      break;
+    case STA:
+      mem[mem[pc + 2] * 2 + 4] = ac;
+      break;
+    case LDA:
+      ac = mem[mem[pc + 2] * 2 + 4];
+      break;
+    case ADD:
+      ac += mem[mem[pc + 2] * 2 + 4];
+      break;
+    case OR:
+      ac |= mem[mem[pc + 2] * 2 + 4];
+      break;
+    case AND:
+      ac &= mem[mem[pc + 2] * 2 + 4];
+      break;
+    case NOT:
+      ac = ~ac;
+      pc += 2;
+      continue;
+    case JMP:
+      pc = mem[pc + 2] * 2 + 4;
+      continue;
+    case JN:
+      if (n) {
+        pc = mem[pc + 2] * 2 + 4;
+        continue;
+      }
+      break;
+    case JZ:
+      if (z) {
+        pc = mem[pc + 2] * 2 + 4;
+        continue;
+      }
+      break;
     }
 
-    uint8_t *memory = (uint8_t *)malloc(sizeof(uint8_t)* TOTAL_SIZE);
-    fread(memory, 1, TOTAL_SIZE, file);
-    fclose(file);
+    pc += 4;
+  }
 
-    memory[0x80] = 0x05;
-    memory[0x81] = 0x03;
-    memory[0x83] = 0x02;
-    memory[0x84] = 0x01;
-    memory[0x86] = 0x06;
-    memory[0x87] = 0x03;
-    memory[0x89] = 0xFC;
-    memory[0x8A] = 0x03;
-
-    int posicao = 0;
-
-    do {
-        printf("AC: %x PC: %x FZ: %i FN: %i INSTRUCAO: %x CONTEUDO: %x\n", AC & 0xFF, PC, flagZero(AC), flagNeg(AC), memory[PC], memory[PC+2]);
-
-        switch (memory[PC]) {
-            case STA:
-                PC += 2;
-                posicao = memory[PC];
-                memory[posicao] = AC;
-                PC += 2;
-                break;
-            case LDA:
-                PC += 2;
-                posicao = memory[PC];
-                AC = memory[posicao];
-                PC += 2;
-                break;
-            case ADD:
-                PC += 2;
-                posicao = memory[PC];
-                AC += memory[posicao];
-                PC += 2;
-                break;
-            case OR:
-                PC += 2;
-                posicao = memory[PC];
-                AC = AC | memory[posicao];
-                PC += 2;
-                break;
-            case AND:
-                PC += 2;
-                posicao = memory[PC];
-                AC = AC & memory[posicao];
-                PC += 2;
-                break;
-            case NOT:
-                AC = ~AC;
-                PC += 2;
-                break;
-            case JMP:
-                PC += 2;
-                PC = memory[PC] * 2 + 4;
-                break;
-            case JN:
-                PC += 2;
-                if (flagNeg(AC)) {
-                    PC = memory[PC] * 2 + 4;
-                } else {
-                    PC += 2;
-                }
-                break;
-            case JZ:
-                PC += 2;
-                if (flagZero(AC)) {
-                    PC = memory[PC] * 2 + 4;
-                } else {
-                    PC += 2;
-                }
-                break;
-            default:
-                PC += 2;
-                break;
-        }
-    } while (memory[PC] != HLT && PC <= 0xFF);
-
-
-    print_memory(memory, TOTAL_SIZE, AC, PC);
-
-    free(memory);
-    return 0;
+  print_memory(mem, TOTAL_SIZE, ac, pc, z, n);
+  return 0;
 }
