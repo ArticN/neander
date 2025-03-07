@@ -1,18 +1,15 @@
-// teste de comentário
+; teste de comentário
 
-// Variáveis
-// {posicao} {valor}
-DATA
-  128 10
-  129 25
+.DATA
+  VAR1  DB 0xF  ; Variável VAR1 com valor 10 (decimal)
+  VAR2  DB 0xA ; Variável VAR2 com valor 0xA (hexadecimal)
+  VAR3  DS     ; Variável VAR3 com espaço reservado
 END
 
-// Instruções
-// {instrução} {valor (se necessário)}
-CODE
-  NOP
-  LDA 128
-  ADD 129
-  STA 130
+.CODE
+  NOP     ; Comando simples {comando}
+  LDA VAR1; Comando composto {comando} {variável}
+  ADD VAR2
+  STA VAR3
   HLT
 END
