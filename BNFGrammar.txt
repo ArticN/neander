@@ -5,7 +5,7 @@
 
 <blank> ::= " "+
 <varName> ::= ([A-z]) ([A-z] | [0-9])*
-<term> ::= <term> <blank>* <operations> <blank>* <fact> | <fact>
+<term> ::= <term> <blank>* ("+" | "-") <blank>* <fact> | <fact>
 
 <fact> ::= <fact> <blank>* <operations> <blank>* <element> | <element>
 <element> ::= <numb> | "(" <term> ")" | <varName>
