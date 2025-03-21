@@ -17,4 +17,4 @@
 <exp> ::= (<float> | <int>) "e" <int>
 
 <str> ::= "\"" ([A-z]+ | [0-9]+)* "\""
-<numb> ::= <float> | <exp> | <int>
+<numb> ::=  <int> | <float> | <exp>
