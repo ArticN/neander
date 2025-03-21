@@ -1,0 +1,49 @@
+<programa> ::= "PROGRAMA" <espacos>? <identificador_com_aspas> <espacos>? ":" <espacos>? <bloco_variaveis>? <espacos>? <bloco_codigo>
+
+<identificador_com_aspas> ::= "\"" <identificador> "\""
+
+<identificador> ::= <letra> <resto_identificador>?
+
+<resto_identificador> ::= <letra_ou_digito>*  
+
+<bloco_variaveis> ::= "VAR" <espacos>? <declaracoes_variaveis>? <espacos>? "END_VAR" | E
+
+<declaracoes_variaveis> ::= <declaracao_variavel> (<espacos>? <declaracao_variavel>)*
+
+<declaracao_variavel> ::= <identificador> ";"
+
+<bloco_codigo> ::= "INICIO" <espacos>? <comandos> <espacos>? <atribuicao_final> <espacos>? "FIM"
+
+<comandos> ::= <comando> (<espacos>? <comando>)*
+
+<comando> ::= <atribuicao> | <comentario>
+
+<comentario> ::= "//" <qualquer_caractere>* "\n"
+
+
+<atribuicao> ::= <identificador> <espacos>? "=" <espacos>? <expressao> ";"
+               | <identificador> <espacos>? "=" <espacos>? <expressao>
+
+<atribuicao_final> ::= "RES" <espacos>? "=" <espacos>? <expressao> ";"
+                     | "RES" <espacos>? "=" <espacos>? <expressao>
+
+<expressao> ::= <termo> ( <espacos>? ("+" | "-") <espacos>? <termo> )*
+
+<termo> ::= <fator> ( <espacos>? ("*" | "/") <espacos>? <fator> )*
+
+<fator> ::= "(" <espacos>? <expressao> <espacos>? ")" | <numero> | <identificador>
+
+<numero> ::= <digito>+
+
+<letra> ::= [A-Z] | [a-z]
+          
+<digito> ::= [0-9]+
+
+<letra_ou_digito> ::= <letra> | <digito> | "_"
+
+<qualquer_caractere> ::= <letra> | <digito> | " " | "!" | "@" | "#" | "$" | "%" | "&" | "*" 
+                        | "(" | ")" | "-" | "_" | "=" | "+" | "[" | "]" | "{" | "}" | ";" 
+                        | ":" | "'" | "\"" | "," | "." | "<" | ">" | "/" | "?" | "\\"
+                        | "|" | "~" | "`"
+
+<espacos> ::= (" " | "\n" | "\t")*
