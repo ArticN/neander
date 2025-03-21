@@ -1,20 +1,22 @@
-<programa> ::= "PROGRAMA " <str> ":\n" "INICIO\n" <defVar>* <result> "FIM"
+<program> ::= "PROGRAMA " <str> ":\n" "INICIO\n" <defVar>* <result> "FIM"
 
 <defVar> ::= <blank>* <varName> <blank>* "=" <blank>* <term> ";\n"
 <result> ::= <blank>* "RES" <blank>* "=" <blank>* <term> ";\n"
 
 <blank> ::= " "+
 <varName> ::= ([A-z]) ([A-z] | [0-9])*
-<term> ::= <term> <blank>* ("+" | "-") <blank>* <fact> | <fact>
+<term> ::= <term> <blank>* <operations> <blank>* <fact> | <fact>
 
 <fact> ::= <fact> <blank>* <operations> <blank>* <element> | <element>
 <element> ::= <numb> | "(" <term> ")" | <varName>
 
-<operations> ::= ("*" | "/" | "%" | "**") 
+<operations> ::= ("*" | "/" | "%" | "**" | "+" | "-") 
+
+<str> ::= "\"" ([A-z]+ | [0-9]+)* "\""
+<numb> ::=  <int> | <float> | <exp>
 
 <int> ::= ("-" [0-9]+) | [0-9]+
 <float> ::= <int> "." [0-9]+
 <exp> ::= (<float> | <int>) "e" <int>
 
-<str> ::= "\"" ([A-z]+ | [0-9]+)* "\""
-<numb> ::=  <int> | <float> | <exp>
+
