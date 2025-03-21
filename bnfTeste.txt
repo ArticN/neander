@@ -1,0 +1,25 @@
+<programa> ::= <header> <inicio> <defVar>* <resFinal> <fim>
+
+<uint> ::= [0-9]+ ("_"? [0-9]+)*
+<int> ::= ("-" <uint>) | <uint>
+<float> ::= <int> "." <uint>
+<expon> ::= (<float> | <int>) "e" <int>
+<numeros> ::= <float> | <expon> | <int>
+
+<espaco> ::= " "+
+<letras> ::= ([a-z] | [A-Z])+
+<string> ::= "\"" (<letras> | <numeros>)* "\""
+<var> ::= ([a-z] | [A-Z]) (<letras> | <numeros>)*
+
+<termo> ::= <termo> <espaco>* ("+" | "-") <espaco>* <fator> | <fator>
+<fator> ::= <fator> <espaco>* ("*" | "/") <espaco>* <elemento> | <elemento>
+<elemento> ::= <numeros> | "(" <termo> ")" | <var>
+
+<header> ::= "PROGRAMA " <label>
+<label> ::= <string> ":\n"
+
+<inicio> ::= "INICIO\n"
+<fim> ::= "FIM" ("\n")?
+
+<defVar> ::= <espaco>* <var> <espaco>* "=" <espaco>* <termo> "\n"
+<resFinal> ::= <espaco>* "RES" <espaco>* "=" <espaco>* <termo> "\n"
